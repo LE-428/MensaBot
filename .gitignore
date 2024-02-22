@@ -1,0 +1,7 @@
+.env
+sandbox.py
+sandbox_google_docs.py
+main_mensabot.py
+old.py
+service_account_credentials.json
+.idea/workspace.xml

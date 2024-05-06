@@ -245,6 +245,7 @@ def main():
     doc_id = os.getenv('DOC_ID')
     mail_server = os.getenv('MAIL_SERVER')
     mail_port = os.getenv('MAIL_PORT')
+    username = os.getenv('USER')
 
     create_service_account_json()
 
@@ -265,7 +266,7 @@ def main():
     prepared_data = prepare_data(full_menu)
     # write_file(prepared_data)
 
-    send_mail(matches, menu_text, wish_dishes, dates, sender, recipient, password, mail_server, mail_port, "api")
+    send_mail(matches, menu_text, wish_dishes, dates, sender, recipient, password, mail_server, mail_port, username)
 
 
 if __name__ == "__main__":

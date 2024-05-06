@@ -4,18 +4,29 @@
 
 ## Setup
 
-You need to have the following values ready als environment variables:
+You need to have the following values ready as environment variables:
 + SENDER
 
 Mail address of the sending account
 
 + PASSWORD
 
-Password of the mail-sending account (Outlook)
+Password or API-key of the mail-sending account
 
 + RECIPIENT
 
-Mail address of the recieving account
+Mail address of the receiving account
+
++ MAIL_SERVER
++ MAIL_PORT
+
+Mail host address (e.g. "live.smtp.mailtrap.io", "smtp-mail.outlook.com", ...)
+and the port of the mail server (e.g. 587)
+
++ USER
+
+Only needed if you log in with an API key, otherwise your sender address will be copied;
+when using Mailtrap.io, set to "api"
 
 + DOC_ID
 

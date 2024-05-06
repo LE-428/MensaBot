@@ -3,9 +3,7 @@
 import requests as req
 from bs4 import BeautifulSoup
 import csv
-### Mail
-from email.message import EmailMessage
-from email.utils import formataddr
+# Mail
 import smtplib
 
 # Für das Auslesen des Google-Dokuments
@@ -16,8 +14,6 @@ from dotenv import load_dotenv
 import os
 
 import json
-
-
 
 
 def fetch_menu(link_to_menu):
@@ -39,7 +35,7 @@ def fetch_menu(link_to_menu):
         menu_raw[i] = str(menu_raw[i]).split('</td>')
     print("Menu fetched")
 
-    menu = [[] for i in range(5)]
+    menu = [[] for _ in range(5)]
 
     for i in menu_raw:
         for j in range(len(i) - 1):
@@ -100,10 +96,10 @@ def find_favs(favorites, menu, dates):
 
     for index, matches_int in enumerate(favorites):
         for g in range(len(menu)):
-            for l in range(len(menu[g])):
-                for w in range(len(menu[g][l])):
-                    if matches_int in menu[g][l][w]:
-                        matches[0].append(menu[g][l][w])
+            for h in range(len(menu[g])):
+                for w in range(len(menu[g][h])):
+                    if matches_int in menu[g][h][w]:
+                        matches[0].append(menu[g][h][w])
                         matches[1].append(dates[g])
                         matches[2].append(index)
 
@@ -125,41 +121,46 @@ def write_file(prepared_data):
         writer.writerows(prepared_data)
 
 
-def send_mail(matches, recipient, wishing_list, dates, sender, password, menu):
-    email = EmailMessage()
-    email["From"] = formataddr(('MensaBot', sender))
-    email["To"] = recipient
+def send_mail(matches, menu, wishing_list, dates, sender, recipient, password, server, port, username=None):
+    if username is None:
+        username = sender
 
-    if len(matches[0]) == 0:
-        return
+    sending_person = "MensaBot <{}>".format(sender)
+    receiving_person = "Mensageher <{}>".format(recipient)
+    subject = "Speiseplan"
+    message = ""
 
-    elif len(matches[0]) == 1:
-        email["Subject"] = str(wishing_list[matches[2][0]]) + " am " + str(matches[1][0]) + "!"
+    # if len(matches[0]) == 0:
+    #     return
+
+    if len(matches[0]) == 1:
+        subject = str(wishing_list[matches[2][0]]) + " am " + str(matches[1][0]) + "!"
         message = "Dein von dir gewünschtes Gericht " + str(wishing_list[matches[2][0]]) + " gibt es am " \
-                  + str(matches[1][0]) + " als " + str(matches[0][0][:-3]) + " für " + str(matches[0][0][-3:]) + " Euronen" + "\n \n"
+                  + str(matches[1][0]) + " als " + str(matches[0][0][:-3]) + " für " + str(
+            matches[0][0][-3:]) + " Euronen" + "\n \n"
 
     elif len(matches[0]) > 1:
-        email["Subject"] = str(len(matches[0])) + " Wunschgerichte " + str(dates[0]) + " - " + str(dates[-1])
-        message = "In der Woche vom " + str(dates[0]) + " - " + str(dates[-1]) + " gibt es folgende deiner Lieblingsgerichte: \n \n"
+        subject = str(len(matches[0])) + " Wunschgerichte " + str(dates[0]) + " - " + str(dates[-1])
+        message = "In der Woche vom " + str(dates[0]) + " - " + str(
+            dates[-1]) + " gibt es folgende deiner Lieblingsgerichte: \n \n"
         text = ""
         for i in range(len(matches[0])):
-            text += str(wishing_list[matches[2][i]]) + ": " + str(matches[0][i][:-3]) + "\t" + str(matches[1][i]) + "\t" + str(matches[0][0][-3:]) + "\n"
+            text += str(wishing_list[matches[2][i]]) + ": " + str(matches[0][i][:-3]) + "\t" + str(
+                matches[1][i]) + "\t" + str(matches[0][0][-3:]) + "\n"
         text += "\n \n"
         message += text
 
-    # email["Subject"] = "Test Email"
-    # message = "Hello world!"
-    menu_text =  "Gesamter Speiseplan " + str(dates[0]) + " - " + str(dates[-1]) + ":\n \n"
+    menu_text = "Gesamter Speiseplan " + str(dates[0]) + " - " + str(dates[-1]) + ":\n \n"
+    all_text = message + menu_text + menu
+    mail_text = "Subject: {}\nTo: {}\nFrom: {}\n\n{}".format(subject, receiving_person, sending_person, all_text)
 
-    email.set_content(message + menu_text + menu)
-
-    smtp = smtplib.SMTP("smtp-mail.outlook.com", port=587)
-    smtp.starttls()
-    smtp.login(sender, password)
-    smtp.sendmail(sender, recipient, email.as_string())
-    smtp.quit()
+    with smtplib.SMTP(server, int(port)) as smtp:
+        smtp.starttls()
+        smtp.login(username, password)
+        smtp.sendmail(sending_person, receiving_person, mail_text)
 
     print("Mail sent")
+
 
 def get_wishes(service_account_file, document_id):
     # Pfad zum Service-Konto-Schlüssel (JSON-Datei)
@@ -186,7 +187,6 @@ def get_wishes(service_account_file, document_id):
                 text_run = element.get('textRun')
                 if text_run:
                     extracted_text += text_run['content']
-
 
     print("Wishes extracted")
     return str(extracted_text)[:-1].split(",")
@@ -243,24 +243,29 @@ def main():
     password = os.getenv('PASSWORD')
     recipient = os.getenv('RECIPIENT')
     doc_id = os.getenv('DOC_ID')
+    mail_server = os.getenv('MAIL_SERVER')
+    mail_port = os.getenv('MAIL_PORT')
 
-    service_account_file = create_service_account_json()
+    create_service_account_json()
 
     link_to_menu = req.get('https://www.mensaplan.de/regensburg/mensa-oth-regensburg/index.html')
 
     wish_dishes = get_wishes('service_account_credentials.json', doc_id)
     # print(wish_dishes)
+
     alltime_menu = [[], []]
 
     menu, dates = fetch_menu(link_to_menu)
     menu_text = format_menu(menu)
+    # print(menu_text)
 
     matches = find_favs(wish_dishes, menu, dates)
     full_menu = save_menu(menu, dates, alltime_menu)
 
     prepared_data = prepare_data(full_menu)
     # write_file(prepared_data)
-    send_mail(matches, recipient, wish_dishes, dates, sender, password, menu_text)
+
+    send_mail(matches, menu_text, wish_dishes, dates, sender, recipient, password, mail_server, mail_port, "api")
 
 
 if __name__ == "__main__":

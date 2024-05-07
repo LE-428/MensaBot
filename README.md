@@ -39,4 +39,4 @@ Google Doc ID, this is the place where you store your wishes as csv, must be set
 + CLIENT_ID
 + CLIENT_URL
 
-These are values from the service_account_credentials.json file that you get when you create a API key under a Google service account
+These are values from the service_account_credentials.json file that you get when you create an API key under a Google service account

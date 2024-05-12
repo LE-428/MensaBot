@@ -74,6 +74,21 @@ def format_menu(menu):
     return text
 
 
+def replace_umlauts(text):
+    replacements = {
+        "ä": "ae",
+        "ö": "oe",
+        "ü": "ue",
+        "Ä": "Ae",
+        "Ö": "Oe",
+        "Ü": "Ue",
+        "ß": "ss"
+    }
+    for umlaut, replacement in replacements.items():
+        text = text.replace(umlaut, replacement)
+    return text
+
+
 def save_menu(menu, dates, alltime_menu):
     for i in range(len(menu)):
         for j in range(len(menu[i])):
@@ -153,6 +168,7 @@ def send_mail(matches, menu, wishing_list, dates, sender, recipient, password, s
     menu_text = "Gesamter Speiseplan " + str(dates[0]) + " - " + str(dates[-1]) + ":\n \n"
     all_text = message + menu_text + menu
     mail_text = "Subject: {}\nTo: {}\nFrom: {}\n\n{}".format(subject, receiving_person, sending_person, all_text)
+    mail_text = replace_umlauts(mail_text)
 
     with smtplib.SMTP(server, int(port)) as smtp:
         smtp.starttls()
